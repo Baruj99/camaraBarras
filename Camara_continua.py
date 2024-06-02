@@ -1,5 +1,5 @@
 #Programa para ver continuamente la càmara y configurarla
-#Versión 1.0
+#Versión 1.1
 from pyzbar import pyzbar
 import cv2
 import subprocess
