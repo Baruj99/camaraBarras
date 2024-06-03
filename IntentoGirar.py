@@ -73,24 +73,40 @@ while True: #Bucle para siempre mantenerse leyendo el frame de la càmara
     #Detectar contornos en la imagen
     ret,thresh = cv2.threshold(gray,150,255,0)
     contours,hierarchy = cv2.findContours(thresh, 1, 2)
-    print("Número de contornos detectados:", len(contours))
+    #print("Número de contornos detectados:", len(contours))
+    # Encontrar el contorno más largo (la línea roja más larga)
+    longest_contour = max(contours, key=cv2.contourArea)
+    # Calcular el rectángulo de mínima área que contiene el contorno más largo
+    rect = cv2.minAreaRect(longest_contour)
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+    # Calcular el ángulo de rotación
+    angle = rect[2]
+    if angle < -45:
+        angle += 90
+    # Rotar la imagen para que la línea quede vertical
+    (h, w) = img_cortada.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
 
     
-    for cnt in contours:
-       x1,y1 = cnt[0][0]
-       approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
-       if len(approx) == 4:
-          x, y, w, h = cv2.boundingRect(cnt)
-          ratio = float(w)/h
-          if ratio >= 0.8 and ratio <= 1.2:
-              if w >= 94 and h >= 94:
-                 img_cortada = cv2.drawContours(img_cortada, [cnt], -1, (0,0,255), 10)
-                 print(cnt)
-             #cv2.putText(img_cortada, 'Square', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
-          #else:
-             #img_cortada = cv2.drawContours(img_cortada, [cnt], -1, (0,255,0), 3)
-             #cv2.putText(img_cortada, 'Rectangle', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-             
+    #for cnt in contours:
+    #   x1,y1 = cnt[0][0]
+    #   approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+    #   if len(approx) == 4:
+    #      x, y, w, h = cv2.boundingRect(cnt)
+    #      ratio = float(w)/h
+    #      if ratio >= 0.8 and ratio <= 1.2:
+    #          if w >= 94 and h >= 94:
+    #             img_cortada = cv2.drawContours(img_cortada, [cnt], -1, (0,0,255), 3)
+    #             print(cnt)
+    #         #cv2.putText(img_cortada, 'Square', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+    #      #else:
+    #         #img_cortada = cv2.drawContours(img_cortada, [cnt], -1, (0,255,0), 3)
+    #         #cv2.putText(img_cortada, 'Rectangle', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+    
+
 
 
     #Colocar el texto para decirle al usuario que con la tecla ESC se termina el proceso
@@ -99,7 +115,7 @@ while True: #Bucle para siempre mantenerse leyendo el frame de la càmara
     #cv2.putText(img_cortada,"No. detectado", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 0))
     #Inicia código para detectar valor de código de barras
     #Guardar el frame actual en el archivo './CamTmp/captura.jpg'
-    cv2.imwrite('./CamTmp/captura.jpg', img_cortada)
+    cv2.imwrite('./CamTmp/captura.jpg', rotated)
     #Abrir la imagen usando una librería que permite girar la imagen
     imagen =  Image.open('./CamTmp/captura.jpg')
     #Iniciar la rotaciòn en un ángulo de 0, aumenta 45 grados cada iteración
@@ -149,7 +165,7 @@ while True: #Bucle para siempre mantenerse leyendo el frame de la càmara
     #Termina código para detectar valor de código de barras
     #cv2.putText(img_cortada,str(codigo_detectato), (20, 80), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 0))
     #Mostrar el frame de la cámara recortado
-    cv2.imshow("Frame", img_cortada)
+    cv2.imshow("Frame", rotated)
     #Esperar 1 milisegundo para que se presione la tecla ESC
     key = cv2.waitKey(1)
     if key == 27:
